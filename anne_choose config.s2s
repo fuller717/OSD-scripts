@@ -1,0 +1,161 @@
+'Generated dialog script
+
+'FilePathSet("", 0, "Choose current directory:", 1);
+
+SampleClear(); 'Set standard sampling state
+FileOpen("", 6, 0, "Please choose a sampling configuration"); 'Choose a sampling configuration
+var v12%; 'View created by FileNew()
+var v11%:= LogHandle();
+PrintLog("\n", (SampleConfig$(3)));
+
+'Set sampling window up the way you like it
+v12%:= FileNew(0,3);
+View(SampleHandle(1)).WindowVisible(1); 'Show sampling controls
+View(SampleHandle(2)).WindowVisible(1); 'Show sequencer controls
+Window(0, 0,69.9896, 107.437);
+
+'Set start and end times
+var begin[6], finish[6], curr_time%[7], loop_time%[7], td%[6];
+samp_start(begin[]);   'set time at whch to start samping
+PrintLog("Sampling should start at %.2d:%.2d:%.2d on %.2d/%.2d/%.4d \n", begin[2], begin[1], begin[0], begin[3], begin[4], begin[5]);
+samp_end(finish[]);   'set time at which to end sampling
+PrintLog("Sampling should end at %.2d:%.2d:%.2d on %.2d/%.2d/%.4d \n", finish[2], finish[1], finish[0], finish[3], finish[4], finish[5]);
+Timedate(curr_time%[]);
+func samp_start(tdate[])
+
+'Declare variables:
+var ok%,dummy0%,int1%,int2%,int3%,int4%,int5%,int6%;
+'Set the variables above for initial values
+DlgCreate("Choose start sampling time");  'Start new dialog
+DlgLabel(1,"Choose sampling time");
+DlgInteger(2,"Time (seconds)",0,60,0,0,1);
+DlgInteger(3,"Time (minutes)",0,60,0,0,1);
+DlgInteger(4,"Time (24 hour clock)",0,23,0,0,1);
+DlgInteger(5,"Date(day of month)",1,31,0,0,1);
+DlgInteger(6,"Month",1,12,0,0,1);
+DlgInteger(7,"Year",2020,2099,0,0,1);
+DlgButton(0,"Cancel");
+DlgButton(1,"OK");
+ok% := DlgShow(dummy0%,int1%,int2%,int3%,int4%,int5%,int6%);    'ok% is 0 if user cancels,  variables updated if not
+'Message("Sampling will start at %d, %d, %d, %d, %d, %d", int1%,int2%,int3%,int4%,int5%,int6%);
+
+'PrintLog("Start sample time is %d, %d, %d, %d, %d, %d \n", int1%,int2%,int3%,int4%,int5%,int6%);
+
+tdate[0] := int1%;
+tdate[1] := int2%;
+tdate[2] := int3%;
+tdate[3] := int4%;
+tdate[4] := int5%;
+tdate[5] := int6%;
+
+end;
+
+func samp_end(tdate[])
+
+'Declare variables:
+var ok%,dummy0%,int1%,int2%,int3%,int4%,int5%,int6%;
+
+'Set the variables above for initial values
+DlgCreate("Choose sampling time end");  'Start new dialog
+DlgLabel(1,"When would you like to end sampling time?");
+DlgInteger(2,"Time (seconds)",0,60,0,0,1);
+DlgInteger(3,"Time (minutes)",0,60,0,0,1);
+DlgInteger(4,"Time (24 hour clock)",0,23,0,0,1);
+DlgInteger(5,"Date(day of month)",1,31,0,0,1);
+DlgInteger(6,"Month",1,12,0,0,1);
+DlgInteger(7,"Year",2020,2099,0,0,1);
+DlgButton(0,"Cancel");
+DlgButton(1,"OK");
+ok% := DlgShow(dummy0%,int1%,int2%,int3%,int4%,int5%,int6%);    'ok% is 0 if user cancels,  variables updated if not
+'Message("Sampling will finish at %d, %d, %d, %d, %d, %d", int1%,int2%,int3%,int4%,int5%,int6%);
+
+'PrintLog("End sampling at %d, %d, %d, %d, %d, %d,\n", int1%,int2%,int3%,int4%,int5%,int6%);
+
+tdate[0] := int1%;
+tdate[1] := int2%;
+tdate[2] := int3%;
+tdate[3] := int4%;
+tdate[4] := int5%;
+tdate[5] := int6%;
+
+end;
+
+
+
+
+
+
+
+'Name the log file the same as the sampling file
+var samp_name$ := SampleAutoName$();
+var samp_dir$ := FilePath$(3);
+'var logfilename$ : = samp_name$ + "\ " + samp_dir$
+View(LogHandle());
+
+'Set toolbar buttons
+ToolbarSet(0, "", idle%); 'idle routine entry 
+ToolbarSet(1, "Stop", stopsampling%); 'button to stop sampling 
+ToolbarEnable(1, 0); 'disable stop button 
+ToolbarSet(2, "Start", startsampling%); 'button to start sampling 
+ToolbarSet(3, "Abort", abortsampling%); 'button to start sampling
+Toolbar("Sampling control", 1023); 'show toolbar 
+Message("Sampling is over"); 'tell user we are done 
+halt; 'all done! 
+
+
+'Toolbar functions
+func startsampling%() 'button 1 function 
+FileNew(0, 3); 'create new file 
+SampleStart(); 'start off sampling 
+ToolbarEnable(1, 1); 'enable stop button 
+ToolbarEnable(2, 0); 'disable start button 
+ToolbarText("Sampling in progress"); 'update toolbar message 
+return 1; 'keep toolbar active 
+end; 
+
+func stopsampling%() 'button 2 function 
+SampleStop(); 'finish sampling 
+ToolbarText("Stopped"); 'update toolbar message 
+View(LogHandle());
+FileSaveAs(samp_dir$ + "\ " + samp_name$+ "_log.txt"); 
+return 0; 'stop toolbar 
+end; 
+
+func abortsampling%() 'button 3 function 
+SampleAbort(); 'start off sampling 
+ToolbarEnable(1, 1); 'enable stop button 
+ToolbarEnable(2, 1); 'disable start button 
+ToolbarText("Sampling aborted"); 'update toolbar message 
+return 0; 'keep toolbar active 
+end; 
+
+func idle%() 'idle routine 
+if samplestatus() = 0 then
+    Timedate(curr_time%[]);
+    if curr_time%[0] >= begin[0] and curr_time%[1] >= begin[1] and curr_time%[2] >= begin[2] and curr_time%[3] >= begin[3] and curr_time%[4] >= begin[4] and curr_time%[5] >= begin[5] then
+        SampleStart();
+        ToolbarEnable(1, 1); 'enable stop button 
+        ToolbarEnable(2, 0); 'disable start button 
+        ToolbarText("Sampling in progress"); 'update toolbar message
+        'View(v12%);
+        'FileTimeDate(td%[]);
+        'PrintLog("Sampling actually started at %.2d:%.2d:%.2d on %.2d/%.2d/%.4d \n", td%[2], td%[1], td%[0], td%[3], td%[4], td%[5]);
+    endif;
+else
+    if samplestatus() = 2 then 'if we are sampling 
+        Timedate(curr_time%[]);
+        if curr_time%[0] >= finish[0] and curr_time%[1] >= finish[1] and curr_time%[2] >= finish[2] and curr_time%[3] >= finish[3] and curr_time%[4] >= finish[4] and curr_time%[5] >= finish[5] then 'if sampled > 10 seconds 
+            Yield();
+            SampleStop(); 'stop sampling
+            ToolbarEnable(1, 0); 'disable stop button 
+            ToolbarSet(2, "Start", startsampling%); 'button to start sampling
+            ToolbarText("Stopped, sampling ended at %d \n"); 'update toolbar message
+            View(LogHandle());
+            FileSaveAs(samp_dir$ + "\ " + samp_name$+ "_log.txt");            
+            return 0; 'stop toolbar too 
+        endif; 
+    endif; 
+endif;
+return 1; 'leave toolbar running
+end;
+
